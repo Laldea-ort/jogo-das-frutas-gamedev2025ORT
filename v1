@@ -1,0 +1,24 @@
+import pygame as pg
+
+pg.init()
+screen_width = 1280
+screen_height = 720
+screen = pg.display.set_mode((screen_width, screen_height))
+running = True
+clock = pg.time.Clock()
+
+while running:
+    for event in pg.event.get():
+        if event.type == pg.QUIT:
+            running = False
+
+    screen.fill("lightblue")
+
+    pg.draw.rect(screen, [0,170,0], [0, 630, screen_width, 100])
+    pg.draw.rect(screen, [210, 105, 30], [screen_width/2, 570, 60, 60])
+
+    pg.display.flip()
+
+    clock.tick(60)
+
+pg.quit()
