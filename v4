@@ -1,0 +1,146 @@
+import pygame as pg
+import random
+
+pg.init()
+screen_width = 1280
+screen_height = 720
+screen = pg.display.set_mode((screen_width, screen_height))
+running = True
+clock = pg.time.Clock()
+x = screen_width / 2
+y = 570
+listacores = [[255, 0, 0], [0, 0, 255], [255, 255, 0], [128, 0, 128], [255, 90, 0]]
+pontos = 0
+fonte = pg.font.SysFont(None, 40, True)
+fonte1 = pg.font.SysFont(None, 40, True)
+fonte_title = pg.font.SysFont("Arial", 100, True, True)
+tempo = 60  # Mantive como 1 para teste rápido; mude para 10 se quiser
+start = True
+botao_init_rect = pg.Rect(screen_width / 2 - 100, screen_height / 2 - 160, 260, 140)
+botao_restart_rect = pg.Rect(200, screen_height / 2 + 50, 260, 140)
+botao_quit = pg.Rect(850, screen_height / 2 + 50, 260, 140)
+fonte_bt = pg.font.SysFont(None, 80, True)
+font_point = pg.font.SysFont('Arial', 100, True)
+# Removido: text_point = font_point.render(f"Pontos: {pontos}", True, [255,255,255])  # Agora será renderizado dinamicamente
+text_bt = fonte_bt.render("Play", True, [255, 255, 255])
+text_q = fonte_bt.render("Quit", True, [255, 255, 255])
+tut = False
+
+fruits = []  # Lista para armazenar as frutas
+
+def frutas():
+    global fruits, player_rect, pontos
+    for fruit in fruits[:]:
+        fruit['y'] += fruit['speed']
+        fruit_rect = pg.Rect(fruit['x'] - 20, fruit['y'] - 20, 40, 40)
+        floor_rect = pg.Rect(0, 630, screen_width, 100)
+
+        if fruit_rect.colliderect(floor_rect):
+            fruits.remove(fruit)
+            continue
+
+        corfruta = fruit['color']
+        if player_rect.colliderect(fruit_rect):
+            if corfruta == [255, 90, 0]:
+                pontos += 10
+            else:
+                pontos += 5
+            fruits.remove(fruit)
+            continue
+
+    if len(fruits) < 1:
+        special_color = [255, 90, 0]
+        weights = [15 if color == special_color else 21.25 for color in listacores]
+        selected_color = random.choices(listacores, weights=weights, k=1)[0]
+        fruits.append({
+            'x': random.randint(0, screen_width),
+            'y': 0,
+            'color': selected_color,
+            'speed': random.randint(5, 8)
+        })
+
+    for fruit in fruits:
+        pg.draw.circle(screen, fruit['color'], (fruit['x'], fruit['y']), 20, 0)
+
+while running:
+    for event in pg.event.get():
+        if event.type == pg.QUIT:
+            running = False
+        if event.type == pg.MOUSEBUTTONDOWN:
+            if event.button == 1 and botao_init_rect.collidepoint(event.pos):
+                start = False
+                botao_init_rect = pg.Rect(0, screen_height / 2 - 160, 260, 140)
+            elif event.button == 1 and botao_restart_rect.collidepoint(event.pos):
+                # Resetar tudo ao reiniciar - Agora vai direto para o jogo, não para a tela inicial
+                tempo = 60
+                pontos = 0
+                x = screen_width / 2
+                y = 570
+                fruits = []  # Limpa as frutas
+                start = False  # Vai direto para o gameplay
+                screen.fill("black")
+                pg.display.update()
+            elif event.button == 1 and botao_quit.collidepoint(event.pos):
+                # Correção: Define running = False antes de pg.quit() para sair do loop limpo
+                running = False
+
+    if start:
+        msg_title = "Fruta contada"
+        title = fonte_title.render(msg_title, True, [255, 255, 255])
+        pg.draw.rect(screen, [255, 0, 0], botao_init_rect)
+        screen.blit(text_bt, (screen_width / 2 - 34, screen_height / 2 - 122))
+        screen.blit(title, ((screen_width / 2) - 300, 0))
+        pg.display.update()
+
+    elif tempo >= 0:
+        msg = f'Pontos: {pontos}'
+        msg2 = f'Tempo: {tempo}'
+
+        screen.fill("lightblue")
+
+        keys = pg.key.get_pressed()
+
+        if keys[pg.K_LEFT]:
+            x -= 6
+        elif keys[pg.K_RIGHT]:
+            x += 6
+
+        player_rect = pg.Rect(x, y, 60, 60)
+
+        floor = pg.draw.rect(screen, [0, 170, 0], [0, 630, screen_width, 100])
+
+        player = pg.draw.rect(screen, [210, 105, 30], [x, y, 60, 60])
+
+        frutas()
+
+        texto_pontos = fonte.render(msg, True, [0, 0, 0])
+        texto_tempo = fonte1.render(msg2, True, [0, 0, 0])
+        screen.blit(texto_pontos, (10, 10))
+        screen.blit(texto_tempo, (screen_width - 150, 10))
+
+        tempo -= 0.0167
+
+        pg.display.update()
+
+        clock.tick(60)
+
+    elif tempo <= 0.01:
+        screen.fill("black")
+
+        title = fonte_title.render("Tempo esgotado", True, [255, 255, 255])
+        screen.blit(title, ((screen_width / 2) - 400, 0))
+
+        # Correção: Renderiza os pontos dinamicamente com o valor atual
+        text_point = font_point.render(f"Pontos: {pontos}", True, [255, 255, 255])
+        screen.blit(text_point, ((screen_width / 2) - 400, 150))
+
+        text_bt2 = fonte_bt.render("Restart", True, [255, 255, 255])
+
+        pg.draw.rect(screen, [255, 0, 0], botao_restart_rect)
+        pg.draw.rect(screen, [255, 0, 0], botao_quit)
+        screen.blit(text_bt2, (230, screen_height / 2 + 90))
+        screen.blit(text_q, (910, screen_height / 2 + 90))
+
+        pg.display.update()
+
+pg.quit()
